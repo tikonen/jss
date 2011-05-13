@@ -15,6 +15,9 @@ var argv = require('optimist').boolean(['bulk_docs', 'bulk-docs'])
   , expression = argv._[1]
   ;
 
+if(predicate === '-')
+  predicate = 'true';
+
 var test = new Function('$, $s', 'with ($) { return (' + predicate + ') }');
 var format = function(obj) { return JSON.stringify(obj) };
 
