@@ -18,7 +18,7 @@ var argv = require('optimist').boolean(['bulk_docs', 'bulk-docs'])
 if(predicate === '-')
   predicate = 'true';
 
-var test = new Function('$, $s', 'with ($) { return (' + predicate + ') }');
+var test = new Function('scope', 'with (scope) { return (' + predicate + ') }');
 var format = function(obj) { return JSON.stringify(obj) };
 
 if(argv.version) {

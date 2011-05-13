@@ -24,8 +24,7 @@ function Stream () {
   self.head   = null;
   self.tail   = null;
   self.silent = null;
-  self.state = { "$INPUT_LINE_NUMBER": 0
-               }
+  self.state = {};
 
   self.on('line', function on_line(line) {
     if(!self.test)
@@ -39,11 +38,35 @@ function Stream () {
   })
 
   self.on('json', function on_json(obj) {
+    var scope = {}
+
+    if(! ('caller' in self.state) ) self.state.caller = {};
+    if(! ('_jss'   in self.state) ) self.state._jss   = {};
+
+    var state = self.state._jss;
+    function inc(key) {
+      var previous_value = state[key] || 0;
+      return previous_value + 1;
+    }
+
+    var awk_stuff = { '$INPUT_LINE_NUMBER' : inc('$INPUT_LINE_NUMBER')
+                    , '$NR'                : inc('$NR')
+                    }
+
+    var key
+    for (key in obj)
+      scope[key] = obj[key];
+
+    for (key in awk_stuff) {
+      scope[key] = awk_stuff[key];
+      state[key] = awk_stuff[key];
+    }
+
+    scope['$'] = obj;
+    scope['$s'] = self.state.caller;
+
     var result = false;
-
-    self.state["$INPUT_LINE_NUMBER"] = self.state["$NR"] = self.state["$INPUT_LINE_NUMBER"] + 1;
-
-    try      { result = self.test.apply(obj, [obj, self.state]) }
+    try      { result = self.test.apply(obj, [scope]) }
     catch(e) { return; }
 
     if( !! (result) )
