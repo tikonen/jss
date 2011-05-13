@@ -19,7 +19,7 @@ if(predicate === '-')
   predicate = 'true';
 
 var test = new Function('scope', 'with (scope) { return (' + predicate + ') }');
-var format = function(obj) { return JSON.stringify(obj) };
+var format = null;
 
 if(argv.version) {
   console.log('jss v' + jss.version);
@@ -31,27 +31,8 @@ if(!predicate) {
   process.exit(1);
 }
 
-if(expression) {
-  var getter = new Function('obj, $, $s, tab, kv, require, util', 'with (obj) { return (' + expression + ') }');
-
-  function tab_separate() {
-    return Array.prototype.slice.apply(arguments).join("\t");
-  }
-
-  function keyval_line(key, val) {
-    if(typeof key !== 'string')
-      throw new Error("Bad key for keyval: " + key);
-
-    return JSON.stringify(key) + ":" + JSON.stringify(val);
-  }
-
-  format = function(obj, test_result, stream_state) {
-    var result = getter.apply(obj, [obj, test_result, stream_state, tab_separate, keyval_line, require, util]);
-    if(typeof result === "object")
-      result = JSON.stringify(result);
-    return "" + result;
-  }
-}
+if(expression)
+  format = new Function('scope', 'with (scope) { return (' + expression + ') }');
 
 var stream = new jss.Stream();
 stream.test = test;

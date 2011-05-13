@@ -1,7 +1,8 @@
 // The jss API
 //
 
-var sys = require('sys')
+var lib = require('./lib')
+  , util = require('util')
   , path = require('path')
   , events = require('events')
   ;
@@ -24,12 +25,9 @@ function Stream () {
   self.head   = null;
   self.tail   = null;
   self.silent = null;
-  self.state = {};
+  self.state  = null;
 
   self.on('line', function on_line(line) {
-    if(!self.test)
-      throw new Error("No JS test defined");
-
     var obj;
     try      { obj = JSON.parse(line) }
     catch(e) { return; /* Nothing to do */ }
@@ -40,29 +38,21 @@ function Stream () {
   self.on('json', function on_json(obj) {
     var scope = {}
 
-    if(! ('caller' in self.state) ) self.state.caller = {};
-    if(! ('_jss'   in self.state) ) self.state._jss   = {};
+    var state = self.state.jss;
+    var line_num = lib.inc(state.awk, '$INPUT_LINE_NUMBER');
 
-    var state = self.state._jss;
-    function inc(key) {
-      var previous_value = state[key] || 0;
-      return previous_value + 1;
-    }
-
-    var awk_stuff = { '$INPUT_LINE_NUMBER' : inc('$INPUT_LINE_NUMBER')
-                    , '$NR'                : inc('$NR')
-                    }
+    state.awk['$INPUT_LINE_NUMBER'] = line_num;
+    state.awk['$NR']                = line_num;
 
     var key
+
     for (key in obj)
       scope[key] = obj[key];
 
-    for (key in awk_stuff) {
-      scope[key] = awk_stuff[key];
-      state[key] = awk_stuff[key];
-    }
+    for (key in state.awk)
+      scope[key] = state[key];
 
-    scope['$'] = obj;
+    scope['$']  = obj;
     scope['$s'] = self.state.caller;
 
     var result = false;
@@ -85,15 +75,35 @@ function Stream () {
     }
   }
 
-  var match_count = 0;
   self.on('match', function on_match(obj, result) {
-    if(match_count === 0)
+    var scope = {};
+
+    var state = self.state.jss;
+
+    state.awk['$ONR'] = lib.inc(state.awk, '$ONR')
+
+    if(state.awk['$ONR'] === 1) // First-time to output
       insert('head');
 
-    match_count += 1;
+    var scope = {}
+      , key
+      ;
+
+    for (var key in state.awk)
+      scope[key] = state.awk[key];
+
+    scope['$']  = obj;
+    scope['$_'] = result;
+    scope['$s'] = self.state.caller;
+
+    for (var key in lib.formatting)
+      scope[key] = lib.formatting[key];
+
+    scope.require = require;
+    scope.util    = util;
 
     try {
-      var output = self.format.apply(obj, [obj, result, self.state]);
+      var output = self.format.apply(obj, [scope]);
       if(output) {
         insert('pre');
         self.out.write(output);
@@ -107,13 +117,38 @@ function Stream () {
     }
   })
 }
-sys.inherits(Stream, events.EventEmitter);
+util.inherits(Stream, events.EventEmitter);
 
 Stream.prototype.pump = function() {
   var self = this
     , ready_lines = []
     , unterminated = ""
     ;
+
+  if(!self.test)
+    throw new Error("No JS test defined");
+
+  lib.setdefault(self      , 'state' , {});
+  lib.setdefault(self.state, 'caller', {});
+  lib.setdefault(self.state, 'jss'   , {});
+
+  lib.setdefault(self.state.jss, 'awk', {});
+  lib.setdefault(self.state.jss.awk, '$PID', process.pid);
+  lib.setdefault(self.state.jss.awk, '$$'  , process.pid);
+  lib.setdefault(self.state.jss.awk, '$ENV', process.env);
+
+  function default_formatter(scope) {
+    return scope['$']; // Default behavior is to output the object unmodified.
+  }
+
+  var inner_formatter = self.format || default_formatter;
+  self.format = function format_result(scope) {
+    var result = inner_formatter.apply(this, [scope]);
+
+    if(typeof result === 'object')
+      return JSON.stringify(result);
+    return "" + result;
+  }
 
   if(self.prefix)
     self.emit('line', self.prefix);
