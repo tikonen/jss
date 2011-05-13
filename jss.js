@@ -99,11 +99,10 @@ Stream.prototype.pump = function() {
         unterminated = "";
       }
 
-      if(a + 1 === lines.length) {
+      if(a + 1 === lines.length)
         unterminated = line;
-      } else {
-        ready_lines.push(line.replace(/,$/, ""));
-      }
+      else
+        ready_lines.push(line.replace(/,\s*$/, "")); // Strip possible comma and spaces
     })
 
     var line;
