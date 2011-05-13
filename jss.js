@@ -24,7 +24,8 @@ function Stream () {
   self.head   = null;
   self.tail   = null;
   self.silent = null;
-  self.state = {};
+  self.state = { "$INPUT_LINE_NUMBER": 0
+               }
 
   self.on('line', function on_line(line) {
     if(!self.test)
@@ -39,6 +40,9 @@ function Stream () {
 
   self.on('json', function on_json(obj) {
     var result = false;
+
+    self.state["$INPUT_LINE_NUMBER"] = self.state["$NR"] = self.state["$INPUT_LINE_NUMBER"] + 1;
+
     try      { result = self.test.apply(obj, [obj, self.state]) }
     catch(e) { return; }
 
