@@ -109,9 +109,11 @@ Stream.prototype.pump = function() {
         ready_lines.push(line.replace(/,\s*$/, "")); // Strip possible comma and spaces
     })
 
-    var line;
-    while(line = ready_lines.shift())
+    var a, line;
+    for(a = 0; a < ready_lines.length; a++) {
+      line = ready_lines[a];
       self.emit('line', line);
+    }
   })
 
   self.in.on('end', function() {
