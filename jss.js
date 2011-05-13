@@ -121,7 +121,6 @@ util.inherits(Stream, events.EventEmitter);
 
 Stream.prototype.pump = function() {
   var self = this
-    , ready_lines = []
     , unterminated = ""
     ;
 
@@ -155,6 +154,7 @@ Stream.prototype.pump = function() {
 
   self.in.setEncoding('utf8');
   self.in.on('data', function on_data(chunk) {
+    var ready_lines = [];
     chunk.split(/\r?\n/).forEach(function(line, a, lines) {
       if(a === 0) {
         line = unterminated + line;
