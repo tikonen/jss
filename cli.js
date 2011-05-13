@@ -52,7 +52,7 @@ if(argv.state) {
 
 if(argv.bulk_docs || argv['bulk-docs']) {
   argv.head = '{"docs":\n';
-  argv.tail = ']}';
+  argv.tail = ']}\n';
 
   stream.pre = function() {
     stream.pre = function() { return ", " };
