@@ -3,7 +3,7 @@
 //
 
 var sys = require('sys')
-  , jss = require('jss')
+  , jss = require('./jss')
   , util = require('util')
   ;
 
