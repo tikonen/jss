@@ -128,7 +128,7 @@ Stream.prototype.pump = function() {
     throw new Error("No JS test defined");
 
   lib.setdefault(self      , 'state' , {});
-  lib.setdefault(self.state, 'caller', {});
+  lib.setdefault(self.state, 'caller', { "A":[], "C":0, "S":"" }); // An array, a counter, and a string.
   lib.setdefault(self.state, 'jss'   , {});
 
   lib.setdefault(self.state.jss, 'awk', {});
