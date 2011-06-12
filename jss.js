@@ -144,9 +144,7 @@ Stream.prototype.pump = function() {
   self.format = function format_result(scope) {
     var result = inner_formatter.apply(this, [scope]);
 
-    if(typeof result === 'object')
-      return JSON.stringify(result);
-    return "" + result;
+    return printable(result);
   }
 
   if(self.prefix)
@@ -184,3 +182,17 @@ Stream.prototype.pump = function() {
 }
 
 exports.Stream = Stream;
+
+//
+// Utilities
+//
+
+function printable(obj) {
+  if(typeof obj === 'function')
+    return obj();
+
+  if(typeof obj === 'object')
+    return JSON.stringify(obj);
+
+  return "" + obj;
+}
