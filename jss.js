@@ -26,6 +26,7 @@ function Stream () {
   self.tail   = null;
   self.silent = null;
   self.state  = null;
+  self.on_end = null;
 
   self.on('line', function on_line(line) {
     var obj;
@@ -173,6 +174,26 @@ Stream.prototype.pump = function() {
   })
 
   self.in.on('end', function() {
+    var result, scope;
+
+    if(self.on_end) {
+      result = undefined;
+      scope = { '$s'     : self.state.caller
+              , 'require': require
+              , 'util'   : util
+              };
+      try        { result = self.on_end.call(self, scope); }
+      catch (er) { /* noop */ }
+
+      if(Array.isArray(result))
+        result.forEach(function(elem) {
+          self.out.write(printable(elem) + "\n");
+        })
+
+      else if(typeof result !== 'undefined')
+        self.out.write(printable(result) + "\n");
+    }
+
     self.out.write(self.tail || '');
   })
 

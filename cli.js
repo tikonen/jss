@@ -50,6 +50,9 @@ if(argv.state) {
   stream.state = state_init(require, util, json_from_file);
 }
 
+if(argv.end)
+  stream.on_end = new Function('scope', 'with (scope) { return (' + argv.end + ') }');
+
 if(argv.bulk_docs || argv['bulk-docs']) {
   argv.head = '{"docs":\n';
   argv.tail = ']}\n';
