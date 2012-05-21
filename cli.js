@@ -2,9 +2,8 @@
 // The jss command-line interface.
 //
 
-var sys = require('sys')
+var util = require('util')
   , jss = require('./jss')
-  , util = require('util')
   ;
 
 var usage = 'jss <test predicate> [result expression]';
@@ -54,12 +53,13 @@ if(argv.end)
   stream.on_end = new Function('scope', 'with (scope) { return (' + argv.end + ') }');
 
 if(argv.bulk_docs || argv['bulk-docs']) {
-  argv.head = '{"docs":\n';
-  argv.tail = ']}\n';
+	stream.out.write( '{"docs": [\n' );
+	argv.head = '';
+	argv.tail = ']}\n';
 
   stream.pre = function() {
     stream.pre = function() { return ", " };
-    return "[ ";
+    return "";
   }
 } else if(argv.object) {
   argv.tail = '}';

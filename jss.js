@@ -198,7 +198,7 @@ Stream.prototype.pump = function() {
   })
 
   self.in.on('error', function(er) {
-    console.log("!!!!!!!!!!!!!!" + er);
+      console.error("jss: " + er);
   })
 }
 
